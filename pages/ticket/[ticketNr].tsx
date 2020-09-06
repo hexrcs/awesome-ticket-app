@@ -5,6 +5,7 @@ import { Box, Button, Text, Flex, Link } from "@chakra-ui/core";
 import Ticket from "../../components/Ticket";
 import { TwitterShareButton } from "react-share";
 import NextLink from "next/link";
+import auth0 from "../../lib/auth0";
 
 const prisma = new PrismaClient();
 
@@ -15,10 +16,11 @@ type Props = {
     picture: string;
     ticketNr: number;
   };
+  isLoggedOut?: boolean;
   errorCode?: number;
 };
 
-const TicketPage: NextPage<Props> = ({ data, errorCode }) => {
+const TicketPage: NextPage<Props> = ({ data, errorCode, isLoggedOut }) => {
   if (errorCode) {
     return <ErrorPage statusCode={errorCode} />;
   }
@@ -39,19 +41,26 @@ const TicketPage: NextPage<Props> = ({ data, errorCode }) => {
             Share on Twitter
           </Button>
         </TwitterShareButton>
-        <NextLink href="/api/logout" passHref>
-          <Link>
-            <Button size="sm" variantColor="red" margin="1rem">
-              Log out
-            </Button>
-          </Link>
-        </NextLink>
+        {!isLoggedOut && (
+          <NextLink href="/api/logout" passHref>
+            <Link>
+              <Button size="sm" variantColor="red" margin="1rem">
+                Log out
+              </Button>
+            </Link>
+          </NextLink>
+        )}
       </Flex>
     </Flex>
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+export const getServerSideProps: GetServerSideProps = async ({
+  params,
+  req,
+}) => {
+  const session = await auth0.getSession(req);
+
   const ticketNr = Number(params.ticketNr);
   try {
     let ticket = (
@@ -78,6 +87,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
           picture: user.picture,
           ticketNr: ticketNr,
         },
+        isLoggedOut: !session,
       },
     };
   } catch (e) {
