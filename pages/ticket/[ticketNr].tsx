@@ -58,6 +58,7 @@ const TicketPage: NextPage<Props> = ({ data, errorCode, isLoggedOut }) => {
 export const getServerSideProps: GetServerSideProps = async ({
   params,
   req,
+  res,
 }) => {
   const session = await auth0.getSession(req);
 
@@ -69,6 +70,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       })
     )[0];
     if (!ticket) {
+      res.statusCode = 404;
       return {
         props: {
           errorCode: 404,
@@ -92,6 +94,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   } catch (e) {
     console.log(e.message);
+    res.statusCode = 500;
     return {
       props: {
         errorCode: 500,
